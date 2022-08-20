@@ -8,6 +8,7 @@ from src.routes import chat
 load_dotenv()
 
 api = FastAPI()
+# https://stackoverflow.com/questions/59965872/how-to-solve-no-attribute-routes-in-fastapi
 api.include_router(chat.chat)
 
 @api.get("/test")
