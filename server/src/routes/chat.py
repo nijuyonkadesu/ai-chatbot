@@ -10,6 +10,8 @@ from ..socket.utils import get_token
 from ..redis.producer import Producer
 from ..redis.config import Redis
 
+from ..schema.chat import Chat
+from rejson import Path
 chat = APIRouter()
 manager = ConnectionManager()
 redis = Redis()
@@ -27,8 +29,25 @@ async def token_generator(name: str, request: Request):
                 "msg": "Enter a valid name"
             })
     token = str(uuid.uuid4())
-    data = {"name": name, "token": token}
-    return data
+
+    # create new chat session
+    json_client = redis.create_rejson_connection()
+
+    chat_session = Chat(
+        token = token,
+        messages = [],
+        name = name
+    )
+
+    # store chat session in redis JSON with the token as key
+    json_client.jsonset(str(token), Path.rootPath(), chat_session.dict())
+
+    # Set a timeout for redis data
+    redis_client = await redis.create_connection()
+    await redis_client.expire(str(token), 3600) # auto delete in 1hr using aioredis
+
+
+    return chat_session.dict()
 
 
 # @route   POST /refresh_token
