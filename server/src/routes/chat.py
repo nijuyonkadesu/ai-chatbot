@@ -1,9 +1,11 @@
 from http.client import HTTPException
 from multiprocessing import managers
 import os
-from fastapi import APIRouter, FastAPI, WebSocket,  Request
+from fastapi import APIRouter, FastAPI, WebSocket,  Request, Depends
 import uuid
+
 from ..socket.connection import ConnectionManager
+from ..socket.utils import get_token
 
 chat = APIRouter()
 
@@ -40,7 +42,7 @@ manager = ConnectionManager()
 # @access  Public
 
 @chat.websocket("/chat")
-async def websocket_endpoint(websocket: WebSocket = WebSocket):
+async def websocket_endpoint(websocket: WebSocket, token: str = Depends(get_token)):
     await manager.connect(websocket)
     try:
         while True:
