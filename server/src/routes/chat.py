@@ -7,7 +7,12 @@ import uuid
 from ..socket.connection import ConnectionManager
 from ..socket.utils import get_token
 
+from ..redis.producer import Producer
+from ..redis.config import Redis
+
 chat = APIRouter()
+manager = ConnectionManager()
+redis = Redis()
 
 # @route   POST /token
 # @desc    Route to generate chat token
@@ -34,9 +39,6 @@ async def token_generator(name: str, request: Request):
 async def refresh_token(request: Request):
     return None
 
-
-manager = ConnectionManager()
-
 # @route   Websocket /chat
 # @desc    Socket for chatbot
 # @access  Public
@@ -44,10 +46,16 @@ manager = ConnectionManager()
 @chat.websocket("/chat")
 async def websocket_endpoint(websocket: WebSocket, token: str = Depends(get_token)):
     await manager.connect(websocket)
+    redis_client = await redis.create_connection()
+    producer = Producer(redis_client)
+
     try:
         while True:
             data = await websocket.receive_text()
             print(data)
+            stream_data = {}
+            stream_data[token] = data
+            await producer.add_to_stream(stream_data, "message_channel")
             await manager.send_personal_message(f"Response: Simulating response from gpt service", websocket)
     
     except WebSocketDisconnect:
