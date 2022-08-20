@@ -1,5 +1,6 @@
 from fastapi import WebSocket, status, Query
 from typing import Optional
+from ..redis.config import Redis
 
 # To be able to distinguish between two different client sessions 
 # and limit the chat sessions, use a timed token, 
@@ -10,4 +11,12 @@ async def get_token(
 ):
     if token is None or token == "":
         await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
-    return token
+    
+    redis = Redis()
+    redis_client = await redis.create_connection()
+    isexits = await redis_client.exists(token)
+
+    if isexits == 1:
+        return token
+    else:
+        await websocket.close(code=status.WS_1008_POLICY_VIOLATION, reason="Session not authenticated or expired token")
