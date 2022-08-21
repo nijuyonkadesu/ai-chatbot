@@ -5,6 +5,7 @@ from src.model.gptj import GPT
 from src.scheme.chat import Message
 import os
 from worker.src.redis.stream import StreamConsumer
+from src.redis.producer import Producer
 
 redis = Redis()
 
@@ -14,13 +15,14 @@ async def main():
     redis_client = await redis.create_connection()
     consumer = StreamConsumer(redis_client)
     cache = Cache(json_client)
+    producer = Producer(redis_client)
 
     print("Stream consumer started")
     print("Stream waiting for new messages")
 
     while True:
-        # fetch a message from msg queue -> create instance of Message -> add to cache -> send 4 recent msgs to GPT model -> add response back to message
         response = await consumer.consume_stream(stream_channel="message_channel", count=1, block=0)
+
         if response:
             for stream, messages in response:
                 # Get message from stream, and extract token, message data and message id
@@ -30,7 +32,6 @@ async def main():
                              for k, v in message[1].items()][0]
                     message = [v.decode('utf-8')
                                for k, v in message[1].items()][0]
-                    print(token)
 
                     # Create a new message instance and add to cache, specifying the source as human
                     msg = Message(msg=message)
@@ -52,12 +53,14 @@ async def main():
                         msg=res
                     )
 
-                    print(msg)
+                    stream_data = {}
+                    stream_data[str(token)] = str(msg.dict())
+
+                    await producer.add_to_stream(stream_data, "response_channel")
 
                     await cache.add_message_to_cache(token=token, source="bot", message_data=msg.dict())
 
                 # Delete messaage from queue after it has been processed
-
                 await consumer.delete_message(stream_channel="message_channel", message_id=message_id)
 
 
