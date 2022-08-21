@@ -4,7 +4,7 @@ import asyncio
 from src.model.gptj import GPT
 from src.scheme.chat import Message
 import os
-from src.scheme.stream import StreamConsumer
+from worker.src.redis.stream import StreamConsumer
 
 redis = Redis()
 
