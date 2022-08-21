@@ -1,7 +1,5 @@
-from http.client import HTTPException
 from multiprocessing import managers
-import os
-from fastapi import APIRouter, FastAPI, WebSocket,  Request, Depends
+from fastapi import APIRouter, FastAPI, WebSocket,  Request, Depends, WebSocketDisconnect, HTTPException
 import uuid
 
 from ..socket.connection import ConnectionManager
@@ -26,13 +24,13 @@ redis = Redis()
 
 @chat.post("/token")
 async def token_generator(name: str, request: Request):
+    token = str(uuid.uuid4())
     if name == "":
         raise HTTPException(
             status_code = 400, detail={
                 "loc": "name", 
                 "msg": "Enter a valid name"
             })
-    token = str(uuid.uuid4())
 
     # create new chat session
     json_client = redis.create_rejson_connection()
@@ -42,6 +40,8 @@ async def token_generator(name: str, request: Request):
         messages = [],
         name = name
     )
+
+    print(chat_session.dict())
 
     # store chat session in redis JSON with the token as key
     json_client.jsonset(str(token), Path.rootPath(), chat_session.dict())

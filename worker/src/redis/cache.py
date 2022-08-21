@@ -1,4 +1,3 @@
-from .config import Redis
 from rejson import Path
 
 class Cache:

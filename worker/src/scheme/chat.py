@@ -9,3 +9,4 @@ class Message(BaseModel):
     msg: str
     timestamp = str(datetime.now())
 
+
