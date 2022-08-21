@@ -14,6 +14,8 @@ from ..schema.chat import Chat
 from rejson import Path
 from ..redis.stream import StreamConsumer
 
+from ..redis.cache import Cache
+
 chat = APIRouter()
 manager = ConnectionManager()
 redis = Redis()
@@ -57,8 +59,16 @@ async def token_generator(name: str, request: Request):
 # @access  Public
 
 @chat.post("/refresh_token")
-async def refresh_token(request: Request):
-    return None
+async def refresh_token(request: Request, token: str):
+    json_client = redis.create_rejson_connection()
+    cache = Cache(json_client)
+    data = await cache.get_chat_history(token)
+
+    if data == None:
+        raise HTTPException(
+            status_code=400, detail="Session expired or does not exist")
+    else:
+        return data
 
 # @route   Websocket /chat
 # @desc    Socket for chatbot
