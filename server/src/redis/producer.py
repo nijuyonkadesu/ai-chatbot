@@ -1,10 +1,15 @@
 from .config import Redis
 
+
 class Producer:
+    # Ideally this MessageQueue worker
+    # should run in different server
+
     def __init__(self, redis_client):
         self.redis_client = redis_client
 
     async def add_to_stream(self,  data: dict, stream_channel) -> bool:
+        # appends data in to stream_channel (MessageQueue)
         try:
             msg_id = await self.redis_client.xadd(name=stream_channel, id="*", fields=data)
             print(f"Message id {msg_id} added to {stream_channel} stream")

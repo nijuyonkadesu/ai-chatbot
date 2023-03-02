@@ -16,4 +16,3 @@ class Chat(BaseModel):
     messages: List[Message]
     name: str
     session_start = str(datetime.now())
-

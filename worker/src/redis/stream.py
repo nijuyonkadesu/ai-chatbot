@@ -11,5 +11,3 @@ class StreamConsumer:
 
     async def delete_message(self, stream_channel, message_id):
         await self.redis_client.xdel(stream_channel, message_id)
-
-

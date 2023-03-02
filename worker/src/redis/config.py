@@ -5,6 +5,7 @@ from rejson import Client
 
 load_dotenv()
 
+
 class Redis():
     def __init__(self):
         # initialize connection
@@ -14,17 +15,19 @@ class Redis():
         self.connection_url = f"redis://{self.REDIS_USER}:{self.REDIS_PASSWORD}@{self.REDIS_URL}"
         self.REDIS_HOST = os.environ['REDIS_HOST']
         self.REDIS_PORT = os.environ['REDIS_PORT']
-   
+
     async def create_connection(self):
-        self.connection = aioredis.from_url(self.connection_url, db=0)
+        self.connection = aioredis.from_url(
+                self.connection_url, db=0)
 
         return self.connection
 
+    # This method supports operations with JSON
     def create_rejson_connection(self):
         self.redisJson = Client(host=self.REDIS_HOST,
-                                port=self.REDIS_PORT, 
-                                decode_responses=True, 
-                                username=self.REDIS_USER, 
+                                port=self.REDIS_PORT,
+                                decode_responses=True,
+                                username=self.REDIS_USER,
                                 password=self.REDIS_PASSWORD)
 
         return self.redisJson
